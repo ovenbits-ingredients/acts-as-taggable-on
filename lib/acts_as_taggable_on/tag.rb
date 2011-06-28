@@ -19,34 +19,39 @@ module ActsAsTaggableOn
       connection.adapter_name == 'PostgreSQL'
     end
 
-    def self.named(name, locale = "en")
-      where(["name #{like_operator} ? AND locale = ?", name, locale])
+    def self.named(name)
+      where(["name #{like_operator} ?", name])
     end
 
-    def self.named_any(list, locale = "en")
-      where(list.map { |tag| sanitize_sql(["name #{like_operator} ? AND locale = ?", tag.to_s, locale]) }.join(" OR "))
+    def self.named_any(list)
+      where(list.map { |tag| sanitize_sql(["name #{like_operator} ?", tag.to_s]) }.join(" OR "))
     end
 
-    def self.named_like(name, locale = "en")
-      where(["name #{like_operator} ? AND locale = ?", "%#{name}%", locale])
+    def self.named_like(name)
+      where(["name #{like_operator} ?", "%#{name}%"])
     end
 
-    def self.named_like_any(list, locale = "en")
-      where(list.map { |tag| sanitize_sql(["name #{like_operator} ? AND locale = ?", "%#{tag.to_s}%", locale]) }.join(" OR "))
+    def self.named_like_any(list)
+      where(list.map { |tag| sanitize_sql(["name #{like_operator} ?", "%#{tag.to_s}%"]) }.join(" OR "))
+    end
+
+    def self.with_locale(locale = "en")
+      @locale = locale
+      where(["locale = ?", @locale])
     end
 
     ### CLASS METHODS:
 
-    def self.find_or_create_with_like_by_name(name, locale = "en")
-      named_like(name, locale).first || create(:name => name, :locale => locale)
+    def self.find_or_create_with_like_by_name(name, locale)
+      with_locale(locale).named_like(name).first || create(:name => name, :locale => locale)
     end
 
-    def self.find_or_create_all_with_like_by_name(*list, locale = "en")
+    def self.find_or_create_all_with_like_by_name(list, locale)
       list = [list].flatten
 
       return [] if list.empty?
 
-      existing_tags = Tag.named_any(list, locale).all
+      existing_tags = Tag.named_any(list).with_locale(locale).all
       new_tag_names = list.reject do |name| 
         name = comparable_name(name)
         existing_tags.any? { |tag| comparable_name(tag.name) == name }
