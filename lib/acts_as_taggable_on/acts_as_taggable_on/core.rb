@@ -228,7 +228,7 @@ module ActsAsTaggableOn::Taggable
       end
 
       def get_locale
-        if self.respond_to(:locale)
+        if self.respond_to?(:locale)
           self.locale || 'en'
         else
           'en'
