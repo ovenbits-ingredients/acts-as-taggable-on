@@ -74,6 +74,7 @@ module ActsAsTaggableOn::Taggable
         conditions = []
 
         context = options.delete(:on)
+        locale  = options.delete(:locale) || 'en'
 
         if options.delete(:exclude)
           tags_conditions = tag_list.map { |t| sanitize_sql(["#{ActsAsTaggableOn::Tag.table_name}.name LIKE ?", t]) }.join(" OR ")
@@ -94,7 +95,7 @@ module ActsAsTaggableOn::Taggable
           joins << tagging_join
 
         else
-          tags = ActsAsTaggableOn::Tag.with_locale(get_locale).named_any(tag_list)
+          tags = ActsAsTaggableOn::Tag.with_locale(locale).named_any(tag_list)
           return scoped(:conditions => "1 = 0") unless tags.length == tag_list.length
 
           tags.each do |tag|
